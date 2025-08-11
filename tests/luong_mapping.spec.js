@@ -16,7 +16,7 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
   // --- Tìm kiếm order ---
   await page.fill(
     'input.ant-input[placeholder="Type to search..."]',
-    "RQ-27339-89796"
+    "RZ-59839-88849"
   );
   await page.keyboard.press("Enter");
 
@@ -140,16 +140,13 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       '//div[contains(@class, "split-package__footer")]/button[2]'
     );
 
-    // --- Push all package ---
-    await page.click(
-      "//div[@class='SectionInner']//button[contains(text(), 'Push all package')]"
-    );
-  } else {
-    // ✅ Trường hợp chỉ có 1 item → xử lý "Ngược lại"
-    const supplierSelect = page.locator(
-      '//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]'
-    );
-    await supplierSelect.first().click();
+  // --- Push all package ---
+  await page.click("//div[@class='SectionInner']//button[contains(text(), 'Push all package')]");
+
+} else {
+  // Trường hợp chỉ có 1 item → xử lý "Ngược lại"
+  const supplierSelect = page.locator('//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]');
+  await supplierSelect.first().click();
 
     // Chọn option số 5
     const fixedOption = page.locator(
