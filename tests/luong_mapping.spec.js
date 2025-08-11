@@ -102,7 +102,7 @@ test.only('Xử lý đơn hàng với các thao tác đã cho', async ({ page })
   await page.click("//div[@class='SectionInner']//button[contains(text(), 'Push all package')]");
 
 } else {
-  // ✅ Trường hợp chỉ có 1 item → xử lý "Ngược lại"
+  // Trường hợp chỉ có 1 item → xử lý "Ngược lại"
   const supplierSelect = page.locator('//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]');
   await supplierSelect.first().click();
 
