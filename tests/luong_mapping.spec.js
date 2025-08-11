@@ -15,7 +15,7 @@ test.only('Xử lý đơn hàng với các thao tác đã cho', async ({ page })
   ]);
 
     // --- Tìm kiếm order ---
-  await page.fill('input.ant-input[placeholder="Type to search..."]', 'RQ-27339-89796');
+  await page.fill('input.ant-input[placeholder="Type to search..."]', 'RZ-59839-88849');
   await page.keyboard.press('Enter');
 
   // Chờ kết quả hiển thị và click vào order đầu tiên
