@@ -2,7 +2,10 @@
   "name": "test_playwright",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "dev": "npx playwright test tests/luong_mapping.spec.js --headed --project=chromium",
+    "start": "npx playwright test --ui --project=chromium --timeout=0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

@@ -1,5 +1,6 @@
 // playwright script
 import { test, expect } from "@playwright/test";
+import dragSlow from "../helper/dragSlow.js";
 
 test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page }) => {
   // --- Đăng nhập ---
@@ -16,7 +17,7 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
   // --- Tìm kiếm order ---
   await page.fill(
     'input.ant-input[placeholder="Type to search..."]',
-    "RZ-59839-88849"
+    "RX-36392-99287"
   );
   await page.keyboard.press("Enter");
 
@@ -75,6 +76,7 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
   // --- Nếu số item > 1 => Add package và kéo thả ---
   if (total_item > 1) {
     // Tạo thêm pack và kéo từng item vào từng pack
+    let sourceDragSuccess = 0
     for (let i = 1; i < total_item; i++) {
       // Click "Add new a package"
       const addButton = page.locator(
@@ -83,16 +85,20 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       await addButton.waitFor({ state: "visible" });
       await addButton.click();
 
+      await page.waitForTimeout(1000);
+
       // Đợi pack mới xuất hiện
       const newPack = page.locator(
         `(//div[contains(@class, 'split-package__body')])[${i + 1}]`
       );
       await newPack.waitFor({ state: "visible" });
 
+      await page.waitForTimeout(1000);
+
       // Xác định source và target
       const source = page.locator(
         `(//div[contains(@class, 'split-package__body')])[1]//div[@class='ant-spin-container']/div[${
-          i + 1
+          i + 1 - sourceDragSuccess
         }]`
       );
       const target = newPack;
@@ -102,12 +108,23 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       await target.waitFor({ state: "visible" });
 
       // Thực hiện kéo thả với xử lý lỗi
+      await page.pause();
       try {
-        await source.dragTo(target);
+        await dragSlow(page, source, target, {
+          hold: 90,
+          steps: 5,
+          stepDelay: 8,
+          preJitter: 8,
+          jitterDown: true,
+        });
+        sourceDragSuccess++;
+        console.log(`Drag item ${i + 1} thành công`);
       } catch (error) {
         console.error(`Drag item ${i + 1} failed:`, error);
       }
     }
+
+    await page.waitForTimeout(1000)
 
     // Đếm số pack hiện có
     const total_pack = await page
@@ -116,12 +133,11 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       )
       .count();
     console.log("Tổng số pack", total_pack);
-
+    await page.pause()
     // Chọn random supplier cho từng pack
     for (let i = 0; i < total_pack; i++) {
       const supplierDropdown = page.locator(
-        `(//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select") and not(contains(@class, "split-package__supplier-is-carrier"))])[${
-          i + 1
+        `(//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select") and not(contains(@class, "split-package__supplier-is-carrier"))])[${i + 1
         }]`
       );
       await supplierDropdown.click();
@@ -140,13 +156,13 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       '//div[contains(@class, "split-package__footer")]/button[2]'
     );
 
-  // --- Push all package ---
-  await page.click("//div[@class='SectionInner']//button[contains(text(), 'Push all package')]");
+    // --- Push all package ---
+    await page.click("//div[@class='SectionInner']//button[contains(text(), 'Push all package')]");
 
-} else {
-  // Trường hợp chỉ có 1 item → xử lý "Ngược lại"
-  const supplierSelect = page.locator('//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]');
-  await supplierSelect.first().click();
+  } else {
+    // Trường hợp chỉ có 1 item → xử lý "Ngược lại"
+    const supplierSelect = page.locator('//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]');
+    await supplierSelect.first().click();
 
     // Chọn option số 5
     const fixedOption = page.locator(
