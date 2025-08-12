@@ -38,7 +38,7 @@ test.only('Xử lý đơn hàng với các thao tác đã cho', async ({ page })
   // Search sản phẩm theo title
   await page.fill('input.ant-input[placeholder="Search for title..."]', 'GRADUA_STOLE_03');
   await page.keyboard.press('Enter');
-
+  await page.waitForTimeout(1000)
   // Chờ sản phẩm load và click vào item đầu tiên
   await page.waitForSelector('//div[@class="ProductLineItems"]//div[contains(@class, "ProductLineItem")][1]');
   await page.click('//div[@class="ProductLineItems"]//div[contains(@class, "ProductLineItem")][1]');
@@ -68,8 +68,8 @@ test.only('Xử lý đơn hàng với các thao tác đã cho', async ({ page })
     await addButton.waitFor({ state: 'visible' });
 
     // Kéo item i+1 từ pack đầu sang pack thứ i+1
-    const source = page.locator(`(//div[contains(@class, 'split-package__body')])[1]//div[@class='ant-spin-container']/div[${i + 1}]`);
-    const target = page.locator(`(//div[contains(@class, 'split-package__body')])[${i + 1}]`);
+    const source = page.locator(`(//div[contains(@class, 'split-package__body')])[1]//div[@class='ant-spin-container']/div[${i}]`);
+    const target = page.locator(`(//div[contains(@class, 'split-package__body')])[${i}]`);
 
     // Chờ cả source và target xuất hiện và hiển thị
     await source.waitFor({ state: 'visible' });
