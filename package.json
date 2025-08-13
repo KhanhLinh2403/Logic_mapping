@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "start": "npx playwright test --ui --project=chromium --timeout=0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

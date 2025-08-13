@@ -1,5 +1,7 @@
 // playwright script
 import { test, expect } from "@playwright/test";
+import markDonePrintFIle from "../helper/mark_done_print_file";
+import dragSlow from "../helper/dragSlow";
 
 test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page }) => {
   // --- Đăng nhập ---
@@ -14,14 +16,21 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
   ]);
 
   // --- Tìm kiếm order ---
-  await page.fill(
-    'input.ant-input[placeholder="Type to search..."]',
-    "RN-35346-98685"
-  );
-  await page.keyboard.press("Enter");
+  // await page.fill(
+  //   'input.ant-input[placeholder="Type to search..."]',
+  //   "RG-75694-32499"
+  // );
+  // await page.keyboard.press("Enter");
 
+  // Click vào phần tử Unfulfilled
+  await page.click("//div[@class='ant-radio-group ant-radio-group-solid']//span[text()='Unfulfilled']");
+
+  await page.waitForTimeout(1000)
   // Chờ kết quả hiển thị và click vào order đầu tiên
   await page.click('//tbody/tr[1]/td[contains(@class, "OrderCode")]/a[1]');
+
+  // Lưu ordernumber vừa click
+  const orderNumber = (await page.textContent('//h1[contains(@class, "PageTitle") and contains(@class, "OrderNumber")]')).replace('#', '');
 
   // Chờ nút 'Select product' xuất hiện
   await page.waitForSelector("//button[text()='Select product']");
@@ -75,6 +84,7 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
   // --- Nếu số item > 1 => Add package và kéo thả ---
   if (total_item > 1) {
     // Tạo thêm pack và kéo từng item vào từng pack
+    let sourceDragSuccess = 0
     for (let i = 1; i < total_item; i++) {
       // Click "Add new a package"
       const addButton = page.locator(
@@ -89,10 +99,42 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       );
       await newPack.waitFor({ state: "visible" });
 
+      await page.waitForTimeout(1000);
+
+      // Đếm số pack hiện có
+      const total_pack = await page
+        .locator(
+          '//div[@class="ant-spin-container"]//div[@class="split-package__item"]'
+        )
+        .count();
+      console.log("Tổng số pack", total_pack);
+
+      // Chọn supplier cho từng pack (dropdown Ant Design gắn vào body → cần scope theo dropdown đang mở)
+      for (let i = 0; i < total_pack; i++) {
+        const supplierDropdown = page.locator(
+          `(//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select") and not(contains(@class, "split-package__supplier-is-carrier"))])[${i + 1}]`
+        );
+        await supplierDropdown.scrollIntoViewIfNeeded();
+        await supplierDropdown.click();
+
+        // Chờ dropdown hiển thị và chỉ lấy options trong dropdown đang mở
+        const visibleDropdown = page
+          .locator("//div[contains(@class, 'ant-select-dropdown') and not(contains(@class,'ant-select-dropdown-hidden'))]")
+          .last();
+        await visibleDropdown.waitFor({ state: "visible" });
+
+        const visibleOptions = visibleDropdown.locator(
+          ".ant-select-item-option"
+        );
+        const optionCount = await visibleOptions.count();
+        expect(optionCount).toBeGreaterThan(0);
+        await visibleOptions.nth(0).click();
+        await page.waitForTimeout(200);
+      }
+
       // Xác định source và target
       const source = page.locator(
-        `(//div[contains(@class, 'split-package__body')])[1]//div[@class='ant-spin-container']/div[${i + 1
-        }]`
+        `(//div[contains(@class, 'split-package__body')])[1]//div[@class='ant-spin-container']/div[${i + 1 - sourceDragSuccess}]`
       );
       const target = newPack;
 
@@ -101,52 +143,42 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       await target.waitFor({ state: "visible" });
 
       // Thực hiện kéo thả với xử lý lỗi
+      await page.pause();
       try {
-        await source.dragTo(target);
+        await dragSlow(page, source, target, {
+          hold: 90,
+          steps: 5,
+          stepDelay: 8,
+          preJitter: 8,
+          jitterDown: true,
+        });
+        sourceDragSuccess++;
+        console.log(`Drag item ${i + 1} thành công`);
       } catch (error) {
         console.error(`Drag item ${i + 1} failed:`, error);
       }
     }
 
-    // Đếm số pack hiện có
-    const total_pack = await page
-      .locator(
-        '//div[@class="ant-spin-container"]//div[@class="split-package__item"]'
-      )
-      .count();
-    console.log("Tổng số pack", total_pack);
-
-    // Chọn random supplier cho từng pack
-    for (let i = 0; i < total_pack; i++) {
-      const supplierDropdown = page.locator(
-        `(//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select") and not(contains(@class, "split-package__supplier-is-carrier"))])[${i + 1
-        }]`
-      );
-      await supplierDropdown.click();
-
-      const options = await page.$$(
-        '//div[contains(@class, "rc-virtual-list-holder-inner")]//div[contains(@class, "ant-select-item-option")]'
-      );
-      if (options.length > 0) {
-        const randomIndex = Math.floor(Math.random() * options.length);
-        await options[randomIndex].click();
-      }
-    }
+    await page.waitForTimeout(1000)
 
     // Click "Mark packages to processing"
     await page.click(
       '//div[contains(@class, "split-package__footer")]/button[2]'
     );
+    
+    await markDonePrintFIle(orderNumber, page)
 
     // --- Push all package ---
     await page.click("//div[@class='SectionInner']//button[contains(text(), 'Push all package')]");
+    await page.waitForTimeout(2000)
+    await page.click('//div[contains(@class, "ant-modal-footer")]//button[contains(@class, "ant-btn-primary") and span[text()="OK"]]');
 
   } else {
     // Trường hợp chỉ có 1 item → xử lý "Ngược lại"
     const supplierSelect = page.locator('//div[@class="split-package__supplier"]//div[contains(@class, "split-package__supplier-select")]');
     await supplierSelect.first().click();
 
-    // Chọn option số 5
+    // Chọn option số 1
     const fixedOption = page.locator(
       '(//div[contains(@class, "rc-virtual-list-holder-inner")]//div[contains(@class, "ant-select-item-option")])[1]'
     );
@@ -158,46 +190,11 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       '//div[contains(@class, "split-package__footer")]/button[2]'
     );
 
-    // const token = await page.evaluate(() => localStorage.getItem("com.pdf126.accessToken"));
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZDMyNjgyN2U0YTA0YjBjZGZiMTAxYyIsInVzZXJuYW1lIjoibGluaG50azFAZm9vYmxhLmNvbSIsInJvbGVzIjpbeyJfaWQiOiI2NTgxMjE3OGI2ZjBiNzE0OGI4MmIwZjMiLCJuYW1lIjoiZmZtX2FkbWluIn0seyJfaWQiOiI2NThhNTI2M2Q0NDkwMDA0ZmVjNDkyOGEiLCJuYW1lIjoiZmFjX2FkbWluIn1dLCJpc19hZG1pbiI6ZmFsc2UsImRlcGFydG1lbnQiOnsiX2lkIjoiNjU3YTdjMGMwNzgwMjI5YTJjOWMwY2Q0Iiwia2V5IjoiRkZNIiwibmFtZSI6IkZ1bGZpbGxtZW50IiwiY3JlYXRlZF9hdCI6IjIwMjMtMTItMTRUMDM6NTI6NDQuNjIwWiIsInVwZGF0ZWRfYXQiOiIyMDIzLTEyLTE0VDAzOjUyOjQ0LjYyMFoiLCJfX3YiOjB9LCJwZXJtaXNzaW9ucyI6eyJmYWNfcmVxdWVzdF91cGRhdGUiOiJSZXF1ZXN0IHVwZGF0ZSIsImZhY19wZXJtaXNzaW9uX21hbmFnZW1lbnQiOiJQZXJtaXNzaW9uIG1hbmFnZW1lbnQiLCJmYWNfdXNlcl9tYW5hZ2VtZW50IjoiVXNlciBtYW5hZ2VtZW50IiwiZmFjX3JvbGVfbWFuYWdlbWVudCI6IlJvbGUgbWFuYWdlbWVudCIsImZhY191c2VyX2FjdGlvbl9tYW5hZ2VtZW50IjoiVXNlciBhY3Rpb24gbWFuYWdlbWVudCIsImZhY19iYXNlX2Nvc3RfbWFuYWdlbWVudCI6IkZBQyBiYXNlIGNvc3QgbWFuYWdlbWVudCIsImZhY19iYXRjaF9zaGlwIjoiQmF0Y2ggc2hpcCIsImZhY19jcmVhdGVfYnJhbmQiOiJjcmVhdGUgYnJhbmQiLCJmYWNfdXBkYXRlX2JyYW5kIjoidXBkYXRlIGJyYW5kIiwiZmFjX2dldF9icmFuZF90YWciOiJnZXQgYnJhbmQgdGFnIiwiZmZtX2lzc3VlX2xpc3QiOiJGRk0gdmlldyBpc3N1ZSBsaXN0IiwiYmFzZV9jb3N0X21hbmFnZW1lbnQiOiJGQUMgYmFzZSBjb3N0IG1hbmFnZW1lbnQiLCJiYXRjaF9ydWxlX21hbmFnZW1lbnQiOiJNYW5hZ2UgYXV0byBjcmVhdGUgYmF0Y2ggcnVsZXMiLCJmZm1fdXBkYXRlX3Bob3RvX3JlcXVlc3QiOiJGRk0gVXBkYXRlIFBob3RvIFJlcXVlc3QifSwiaWF0IjoxNzU0NjIyNzM1LCJleHAiOjE3NTcyMTQ3MzV9.g3LSGpHgFM8pECobyIrgSFkA4u35nl-MRnFRONLumeg"
-    const domain = "https://fulfillment-staging.merchize.com"; // thay nếu cần
-
-    // --- Gọi API cập nhật status review -> done ---
-    // const res = await page.request.get(`${domain}/api/order/printing-files/search`);
-    const res = await page.request.post(
-      `${domain}/api/order/printing-files/search`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        data: {
-          order_number: "RN-35346-98685",
-        },
-      }
-    );
-    const responseData = await res.json();
-    console.log(responseData)
-    const statusList = ["review", "done"];
-
-    for (const item of responseData.data.items) {
-      for (const stt of statusList) {
-        const updateRes = await page.request.put(
-          `${domain}/api/order/printing-files/${item.fulfillment}/items/${item._id}/status/${stt}`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log(
-          `Updated ${item._id} (${item.fulfillment}) to ${stt} -> ${updateRes.status()}`
-        );
-      }
-    }
+    await markDonePrintFIle(orderNumber, page)
 
     // Push đến xưởng
-    await page.click('//div[@class="pushTo1C"]//button');
+    await page.click('//div[@class="pushTo1C"]//button[contains(text(), "Push")]');
+    await page.waitForTimeout(2000)
+    await page.click('//div[contains(@class, "footer-button")]//button[contains(text(), "Push")]');
   }
 });

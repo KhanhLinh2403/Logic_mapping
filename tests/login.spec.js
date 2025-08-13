@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Login page', () => {
 
     test('Login successfully', async ({ page }) => {
-        await page.goto('https://fulfillment.merchize.com/login');
+        await page.goto('https://fulfillment-staging.merchize.com/login');
 
         // Điền thông tin đăng nhập
         await page.fill('input[name="username"]', 'nganq1_facus');
@@ -15,7 +15,7 @@ test.describe('Login page', () => {
         await page.waitForTimeout(3000); 
 
         // Kiểm tra nếu URL đã thay đổi (login thành công)
-        await expect(page).not.toHaveURL('https://fulfillment.merchize.com/login');
+        await expect(page).not.toHaveURL('https://fulfillment-staging.merchize.com/login');
     });
 
 });
