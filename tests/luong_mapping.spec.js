@@ -2,19 +2,20 @@
 import { test, expect } from "@playwright/test";
 import markDonePrintFIle from "../helper/mark_done_print_file";
 import dragSlow from "../helper/dragSlow";
+import login from "./login"
 
 test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page }) => {
-  // --- Đăng nhập ---
-  await page.goto("https://fulfillment-staging.merchize.com/login");
+  // // --- Đăng nhập ---
+  // await page.goto("https://fulfillment-staging.merchize.com/login");
 
-  await page.fill('input[name="username"]', "linhntk1@foobla.com");
-  await page.fill('input[name="password"]', "Abcd@1234");
+  // await page.fill('input[name="username"]', "linhntk1@foobla.com");
+  // await page.fill('input[name="password"]', "Abcd@1234");
 
-  await Promise.all([
-    page.waitForNavigation(),
-    page.click('button[type="submit"]'),
-  ]);
-
+  // await Promise.all([
+  //   page.waitForNavigation(),
+  //   page.click('button[type="submit"]'),
+  // ]);
+  await login(page)
   // --- Tìm kiếm order ---
   // await page.fill(
   //   'input.ant-input[placeholder="Type to search..."]',
