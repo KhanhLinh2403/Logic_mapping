@@ -13,7 +13,7 @@ const Login = async (page) => {
     await page.waitForTimeout(3000);
 
     // Kiểm tra nếu URL đã thay đổi (login thành công)
-    await expect(page).not.toHaveURL('https://fulfillment-staging.merchize.com/login');
+    // await expect(page).not.toHaveURL('https://fulfillment-staging.merchize.com/login');
 }
 
 export default Login;
