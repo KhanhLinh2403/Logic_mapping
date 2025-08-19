@@ -1,9 +1,9 @@
 import axios from "axios";
 import Papa from "papaparse";
-import Login from "./login.js";
+import Login from "../login.js";
 
 const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1qumJRzHPLbeMtvQA0W1VMBYXWQY3HpHUe2v6BeXMgo0/export?format=csv&gid=1009771488";
+  "https://docs.google.com/spreadsheets/d/1qumJRzHPLbeMtvQA0W1VMBYXWQY3HpHUe2v6BeXMgo0/export?format=csv&gid=1747955396";
 const API_BASE = "https://fulfillment-staging.merchize.com/api/order";
 
 // Đọc dữ liệu từ Google Sheets
@@ -38,7 +38,7 @@ async function searchFFMItem(orderNumbers, headers) {
   const urlSearch = `${API_BASE}/printing-files/search`;
   const payloadSearch = {
     order_number: orderNumbers, 
-    limit: 100, 
+    limit: 10000, 
     page: 1 
   };
   const res = await axios.post(urlSearch, payloadSearch, { headers });
@@ -66,7 +66,7 @@ async function callSearchAndUpdate(orderNumbers, page, dataRead) {
     await Promise.all(
       items.map((item, i) =>
         updateDesign(item._id, dataRead[i], headers)
-          .then(() => console.log(`Cập nhật thành công order ${item._id}`))
+          .then(() => console.log(`Cập nhật thành công order ${item._id}, ${item.name}`, i + 1))
           .catch((err) =>
             console.error(`Lỗi cập nhật ${item._id}:`, err.response?.data || err.message)
           )

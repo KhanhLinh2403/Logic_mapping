@@ -1,6 +1,6 @@
 import axios from "axios";
 import Papa from "papaparse";
-import Login from "./login.js";
+import Login from "../login.js";
 import { log } from "console";
 
 // Hàm đọc dữ liệu từ Google Sheets
