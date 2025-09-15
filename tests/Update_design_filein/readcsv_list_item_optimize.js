@@ -3,7 +3,7 @@ import Papa from "papaparse";
 import Login from "../login.js";
 
 const SHEET_URL =
-  "https://docs.google.com/spreadsheets/d/1qumJRzHPLbeMtvQA0W1VMBYXWQY3HpHUe2v6BeXMgo0/export?format=csv&gid=239012033";
+  "https://docs.google.com/spreadsheets/d/1qumJRzHPLbeMtvQA0W1VMBYXWQY3HpHUe2v6BeXMgo0/export?format=csv&gid=1693307552";
 const API_BASE = "https://fulfillment-staging.merchize.com/api/order";
 
 // Đọc dữ liệu từ Google Sheets
@@ -16,7 +16,7 @@ async function readOrdersFromSheet() {
       front: row["Design Front"],
       back: row["Design Back"],
       sleeves: row["Design Sleeves"],
-      // hood: row["Design Hood"],
+      hood: row["Design Hood"],
       type: row["Product Type"],
       size: row["Size"],
       color: row["Color"],

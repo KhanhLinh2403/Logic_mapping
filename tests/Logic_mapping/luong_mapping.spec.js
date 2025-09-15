@@ -16,6 +16,7 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
 
   // Click vào phần tử Unfulfilled
   await page.click("//div[@class='ant-radio-group ant-radio-group-solid']//span[text()='Unfulfilled']");
+  await page.click('//div[@class="FilterOptions"]//span[normalize-space(text())="US"]');
 
   await page.waitForTimeout(1000)
   // Chờ kết quả hiển thị và click vào order đầu tiên
@@ -182,7 +183,11 @@ test.only("Xử lý đơn hàng với các thao tác đã cho", async ({ page })
       '//div[contains(@class, "split-package__footer")]/button[2]'
     );
 
-    await markDonePrintFIle(orderNumber, page)
+    await markDonePrintFIle(orderNumber, page) 
+
+
+
+    
 
     // Push đến xưởng
     await page.click('//div[@class="pushTo1C"]//button[contains(text(), "Push")]');
