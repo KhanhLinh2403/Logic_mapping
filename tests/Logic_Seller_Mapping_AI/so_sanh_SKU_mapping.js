@@ -2,7 +2,7 @@ import { test } from "@playwright/test";
 import axios from "axios";
 import { readOrdersFromSheet } from "./readcsv_list_product.js";
 
-const API_URL = "https://fulfillment-staging.merchize.com/api/v1/map-end-to-end-pipeline";
+const API_URL = "http://172.22.122.216:5555/api/v1/map-end-to-end-pipeline";
 
 test("So sánh SKU trong sheet với response API", async () => {
   const rows = await readOrdersFromSheet();
